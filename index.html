@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>A Message</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #000000;
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --glass-bg: rgba(255, 255, 255, 0.025);
+    --glass-border: rgba(255, 255, 255, 0.07);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #progressBar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(148,163,184,0.05), rgba(148,163,184,0.25), rgba(148,163,184,0.05));
+    z-index: 999;
+    pointer-events: none;
+  }
+
+  #vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #mouseGlow {
+    position: fixed;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(148,163,184,0.025) 0%, transparent 65%);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+
+  #mouseGlow.active { opacity: 1; }
+
+  #particles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .section {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+  }
+
+  .section-inner {
+    max-width: 660px;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* ── Scroll Indicators ── */
+  .scroll-hint {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    z-index: 10;
+  }
+
+  .scroll-hint.visible { opacity: 1; }
+
+  .scroll-hint.primary .scroll-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  .scroll-hint.subtle .scroll-label {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .scroll-chevron-wrap {
+    position: relative;
+    width: 36px; height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scroll-chevron {
+    width: 14px; height: 14px;
+    border-right: 1.5px solid var(--text-muted);
+    border-bottom: 1.5px solid var(--text-muted);
+    transform: rotate(45deg);
+    animation: chevronBounce 2s ease-in-out infinite;
+  }
+
+  .scroll-hint.primary .scroll-chevron {
+    width: 18px; height: 18px;
+    border-color: var(--text-secondary);
+  }
+
+  .scroll-pulse-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(148,163,184,0.1);
+    animation: pulseRing 2.2s ease-out infinite;
+  }
+
+  .scroll-pulse-ring:nth-child(2) { animation-delay: 0.7s; }
+
+  @keyframes chevronBounce {
+    0%, 100% { transform: rotate(45deg) translateY(0); opacity: 0.6; }
+    30% { transform: rotate(45deg) translateY(5px); opacity: 1; }
+    60% { transform: rotate(45deg) translateY(0); opacity: 0.6; }
+  }
+
+  @keyframes pulseRing {
+    0% { transform: scale(0.5); opacity: 0.4; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in-slow {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 2.2s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 2.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .fade-in-slow.visible { opacity: 1; transform: translateY(0); }
+
+  .s1-main {
+    font-size: clamp(1.5rem, 4.5vw, 2.75rem);
+    font-weight: 300;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    opacity: 0;
+    animation: fadeIn 2.2s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
+  }
+
+  .s1-sub {
+    font-size: clamp(0.875rem, 2vw, 1.05rem);
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin-top: 32px;
+    opacity: 0;
+    animation: fadeIn 2s cubic-bezier(0.22, 1, 0.36, 1) 2.6s forwards;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.92; }
+  }
+
+  .s1-breathed { animation: breathe 6s ease-in-out infinite; }
+
+  .typewriter-line {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    font-weight: 300;
+    line-height: 2.1;
+    color: var(--text-primary);
+    min-height: 2.5em;
+    text-align: center;
+  }
+
+  .typewriter-line .cursor {
+    display: inline-block;
+    width: 2px; height: 1.1em;
+    background: var(--text-muted);
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: clamp(36px, 6vw, 60px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  }
+
+  .glass-card::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(148,163,184,0.015) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .glass-card p {
+    font-size: clamp(0.95rem, 2.2vw, 1.12rem);
+    font-weight: 300;
+    line-height: 2.1;
+    color: var(--text-primary);
+    position: relative;
+    z-index: 1;
+  }
+
+  .amber-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(217, 119, 6, 0.045) 0%, transparent 65%);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 2.5s ease;
+  }
+
+  .amber-overlay.active { opacity: 1; }
+
+  .bouquet-container {
+    width: 100px; height: 150px;
+    margin: 0 auto 44px;
+    opacity: 0;
+    transition: opacity 2.5s ease;
+  }
+
+  .bouquet-container.visible { opacity: 1; }
+
+  .bouquet-container svg { width: 100%; height: 100%; overflow: visible; }
+
+  .bouquet-container svg path,
+  .bouquet-container svg line,
+  .bouquet-container svg circle,
+  .bouquet-container svg ellipse {
+    stroke-dasharray: 800;
+    stroke-dashoffset: 800;
+    fill: none;
+  }
+
+  .bouquet-container.visible svg path,
+  .bouquet-container.visible svg line,
+  .bouquet-container.visible svg circle,
+  .bouquet-container.visible svg ellipse {
+    animation: drawLine 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .bouquet-container.visible svg .s { animation-delay: 2s; }
+  .bouquet-container.visible svg .l { animation-delay: 2.4s; }
+  .bouquet-container.visible svg .p2 { animation-delay: 0.4s; }
+  .bouquet-container.visible svg .p3 { animation-delay: 0.7s; }
+  .bouquet-container.visible svg .p4 { animation-delay: 1s; }
+  .bouquet-container.visible svg .p5 { animation-delay: 1.3s; }
+  .bouquet-container.visible svg .c { animation-delay: 2.2s; }
+  .bouquet-container.visible svg .w { animation-delay: 2.8s; }
+
+  @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+  .reveal-line {
+    font-size: clamp(0.95rem, 2.2vw, 1.12rem);
+    font-weight: 300;
+    line-height: 2.1;
+    color: var(--text-primary);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 1.6s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal-line.visible { opacity: 1; transform: translateY(0); }
+  .reveal-line.dim { color: var(--text-secondary); }
+  .reveal-line.muted { color: var(--text-muted); }
+
+  .soft-divider {
+    width: 36px; height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 0 auto;
+    opacity: 0;
+    transition: opacity 2s ease;
+  }
+
+  .soft-divider.visible { opacity: 1; }
+
+  .signature {
+    font-size: 0.85rem;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    margin-top: 64px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 2s ease, transform 2s ease;
+  }
+
+  .signature.visible { opacity: 1; transform: translateY(0); }
+
+  .line-gap { height: 10px; }
+
+  .quote-deco {
+    font-size: 4rem;
+    line-height: 1;
+    color: rgba(255,255,255,0.03);
+    font-family: Georgia, serif;
+    user-select: none;
+    margin-bottom: -12px;
+    opacity: 0;
+    transition: opacity 2s ease;
+  }
+
+  .quote-deco.visible { opacity: 1; }
+
+  #bottomFade {
+    position: relative;
+    height: 25vh;
+    z-index: 1;
+    background: linear-gradient(to bottom, transparent, #000000);
+    pointer-events: none;
+  }
+
+  @media (max-width: 640px) {
+    .section { padding: 64px 20px; }
+    .glass-card { padding: 28px 20px; border-radius: 18px; }
+    .bouquet-container { width: 80px; height: 120px; }
+    .quote-deco { font-size: 3rem; }
+    .scroll-hint { bottom: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progressBar"></div>
+<div id="vignette"></div>
+<div id="mouseGlow"></div>
+<canvas id="particles"></canvas>
+
+<!-- ═══════ SECTION 1 ═══════ -->
+<section class="section" id="sec1">
+  <div class="section-inner">
+    <p class="s1-main" id="s1Main">"This is not a NOC approval request."</p>
+    <p class="s1-sub">"It is simply something I could not express properly in person."</p>
+  </div>
+  <div class="scroll-hint primary" id="hint1" style="opacity:0; animation: fadeIn 1.2s ease 4s forwards;">
+    <span class="scroll-label">Scroll down</span>
+    <div class="scroll-chevron-wrap">
+      <div class="scroll-pulse-ring"></div>
+      <div class="scroll-pulse-ring"></div>
+      <div class="scroll-chevron"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SECTION 2 ═══════ -->
+<section class="section" id="sec2">
+  <div class="section-inner">
+    <div class="quote-deco" data-delay="0">"</div>
+    <p class="typewriter-line" data-line="I understand why the situation changed your perception of me."></p>
+    <p class="typewriter-line" data-line="And honestly, if I were in your position as a professor, I may have reacted the same way."></p>
+    <p class="typewriter-line" data-line="That is what makes this difficult for me to accept myself."></p>
+  </div>
+  <div class="scroll-hint subtle" id="hint2">
+    <span class="scroll-label">Continue</span>
+    <div class="scroll-chevron-wrap">
+      <div class="scroll-chevron"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SECTION 3 ═══════ -->
+<section class="section" id="sec3">
+  <div class="section-inner">
+    <div class="glass-card fade-in-slow">
+      <p class="reveal-line" data-delay="400">"The notepad material being open on my laptop was my mistake and I take responsibility for that."</p>
+      <div class="line-gap"></div>
+      <p class="reveal-line dim" data-delay="1200">"I know how it appeared."</p>
+      <div class="line-gap"></div>
+      <p class="reveal-line dim" data-delay="2000">"Regardless of my intention, I understand why it damaged your trust."</p>
+    </div>
+  </div>
+  <div class="scroll-hint subtle" id="hint3">
+    <span class="scroll-label">Continue</span>
+    <div class="scroll-chevron-wrap">
+      <div class="scroll-chevron"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SECTION 4 ═══════ -->
+<section class="section" id="sec4">
+  <div class="amber-overlay" id="amberOverlay"></div>
+  <div class="section-inner">
+    <p class="reveal-line" data-delay="0">"This semester, I carried more pressure on myself than I should have, running for 9 CGPA rat race"</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line dim" data-delay="900">"Somewhere between expectations, fear of failure, and constantly questioning myself…"</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line muted" data-delay="1500">"…I stopped thinking with clarity."</p>
+    <div style="height:24px"></div>
+    <p class="reveal-line" data-delay="2400">"That does not excuse the situation."</p>
+    <p class="reveal-line dim" data-delay="3200">"It is simply the honest truth."</p>
+  </div>
+  <div class="scroll-hint subtle" id="hint4">
+    <span class="scroll-label">Continue</span>
+    <div class="scroll-chevron-wrap">
+      <div class="scroll-chevron"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SECTION 5 ═══════ -->
+<section class="section" id="sec5">
+  <div class="section-inner">
+    <div class="bouquet-container" id="bouquet">
+      <svg viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+        <path class="s" d="M50 72 Q48 110 46 145" stroke="#475569" stroke-width="1.3" stroke-linecap="round"/>
+        <path class="s" d="M50 72 Q54 105 58 140" stroke="#475569" stroke-width="1" stroke-linecap="round"/>
+        <path class="l" d="M47 105 Q30 92 35 78" stroke="#475569" stroke-width="1.1" stroke-linecap="round"/>
+        <path class="l" d="M53 98 Q70 85 65 74" stroke="#475569" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M50 68 Q35 48 43 32 Q55 48 50 68" stroke="#64748b" stroke-width="1.1" stroke-linecap="round"/>
+        <path class="p2" d="M50 68 Q65 48 57 32 Q45 48 50 68" stroke="#64748b" stroke-width="1.1" stroke-linecap="round"/>
+        <path class="p3" d="M50 68 Q42 42 50 26 Q58 42 50 68" stroke="#64748b" stroke-width="1.1" stroke-linecap="round"/>
+        <path class="p4" d="M50 68 Q30 58 34 44 Q50 52 50 68" stroke="#64748b" stroke-width="1.1" stroke-linecap="round"/>
+        <path class="p5" d="M50 68 Q70 58 66 44 Q50 52 50 68" stroke="#64748b" stroke-width="1.1" stroke-linecap="round"/>
+        <circle class="c" cx="50" cy="52" r="4.5" stroke="#94a3b8" stroke-width="0.9"/>
+        <circle class="c" cx="48" cy="50" r="0.8" stroke="#64748b" stroke-width="0.6"/>
+        <circle class="c" cx="52" cy="50" r="0.8" stroke="#64748b" stroke-width="0.6"/>
+        <circle class="c" cx="50" cy="54" r="0.8" stroke="#64748b" stroke-width="0.6"/>
+        <ellipse class="w" cx="50" cy="72" rx="6" ry="2.5" stroke="#475569" stroke-width="0.8"/>
+      </svg>
+    </div>
+    <p class="reveal-line" data-delay="500">"What stayed with me was not fear of punishment or UFM"</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line dim" data-delay="1400">"It was the feeling that I disappointed someone whose respect genuinely mattered to me."</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line muted" data-delay="2400">"And that feeling has stayed with me longer than I expected."</p>
+  </div>
+  <div class="scroll-hint subtle" id="hint5">
+    <span class="scroll-label">Continue</span>
+    <div class="scroll-chevron-wrap">
+      <div class="scroll-chevron"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SECTION 6 ═══════ -->
+<section class="section" id="sec6">
+  <div class="section-inner">
+    <p class="reveal-line" data-delay="0">"Even after this incident…"</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line dim" data-delay="800">"I still carry respect for you as a teacher."</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line" data-delay="1600">"Because teachers are remembered not only for the subjects they teach…"</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line dim" data-delay="2500">"…but also for the standards they expect from their students."</p>
+  </div>
+  <div class="scroll-hint subtle" id="hint6">
+    <span class="scroll-label">Continue</span>
+    <div class="scroll-chevron-wrap">
+      <div class="scroll-chevron"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SECTION 7 ═══════ -->
+<section class="section" id="sec7">
+  <div class="section-inner">
+    <p class="reveal-line muted" data-delay="0">"Perhaps making a website for this is unusual."</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line dim" data-delay="900">"But after that interaction, I kept carrying one feeling with me."</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line" data-delay="1800">"That my image in your eyes had changed beyond repair."</p>
+    <div style="height:22px"></div>
+    <p class="reveal-line dim" data-delay="3000">"And I think this was simply my way of trying to say what I could not properly express in person."</p>
+  </div>
+  <div class="scroll-hint subtle" id="hint7">
+    <span class="scroll-label">Continue</span>
+    <div class="scroll-chevron-wrap">
+      <div class="scroll-chevron"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ SECTION 8 — NO HINT (final section) ═══════ -->
+<section class="section" id="sec8">
+  <div class="section-inner">
+    <p class="reveal-line" data-delay="0">"Trust takes years to build."</p>
+    <p class="reveal-line dim" data-delay="600">"A moment to damage."</p>
+    <p class="reveal-line muted" data-delay="1200">"And much longer to rebuild."</p>
+    <div style="height:36px"></div>
+    <p class="reveal-line" data-delay="2200">"I do not know whether your perception of me will ever change."</p>
+    <div class="line-gap"></div>
+    <p class="reveal-line dim" data-delay="3200">"But I hope that with time, my actions and work will speak more honestly than this one moment did."</p>
+    <div style="height:56px"></div>
+    <div class="soft-divider" data-delay="4400"></div>
+    <div style="height:56px"></div>
+    <p class="reveal-line muted" data-delay="5000">"Thank you for reading this."</p>
+    <p class="reveal-line muted" data-delay="5800">"Wishing you good health and peace always."</p>
+    <p class="signature" data-delay="7000">— Abhishek</p>
+  </div>
+</section>
+
+<div id="bottomFade"></div>
+
+<script>
+// ═══════ PARTICLES (BRIGHTER) ═══════
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let particleSpeed = 0.25;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2 + 0.6;
+    this.speedX = (Math.random() - 0.5) * particleSpeed;
+    this.speedY = (Math.random() - 0.5) * particleSpeed;
+    this.baseOpacity = Math.random() * 0.45 + 0.15;
+    this.opacity = this.baseOpacity;
+    this.pulse = Math.random() * Math.PI * 2;
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    this.pulse += 0.01;
+    this.opacity = this.baseOpacity + Math.sin(this.pulse) * 0.1;
+    if (this.x < -10 || this.x > canvas.width + 10 ||
+        this.y < -10 || this.y > canvas.height + 10) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(180, 195, 215, ${Math.max(0.05, this.opacity)})`;
+    ctx.fill();
+    // soft glow around each particle
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(160, 175, 200, ${Math.max(0, this.opacity * 0.08)})`;
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 90; i++) particles.push(new Particle());
+
+function drawConnections() {
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 130) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        const alpha = 0.06 * (1 - dist / 130);
+        ctx.strokeStyle = `rgba(170, 185, 210, ${alpha})`;
+        ctx.lineWidth = 0.6;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawConnections();
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+function setParticleSpeed(speed) {
+  particleSpeed = speed;
+  particles.forEach(p => {
+    p.speedX = (Math.random() - 0.5) * speed;
+    p.speedY = (Math.random() - 0.5) * speed;
+  });
+}
+
+// ═══════ PROGRESS BAR ═══════
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+  document.getElementById('progressBar').style.width = progress + '%';
+}, { passive: true });
+
+// ═══════ SCROLL HINTS — show when section is in view, hide on scroll ═══════
+const hints = document.querySelectorAll('.scroll-hint');
+const hintSectionMap = {};
+
+hints.forEach(hint => {
+  const parentSection = hint.closest('.section');
+  if (parentSection) {
+    hintSectionMap[parentSection.id] = hint;
+  }
+});
+
+// Show hint when its section enters view
+const hintObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const hint = hintSectionMap[entry.target.id];
+    if (!hint) return;
+    if (entry.isIntersecting) {
+      // Delay showing hint a bit so text appears first
+      setTimeout(() => {
+        hint.classList.add('visible');
+      }, entry.target.id === 'sec2' ? 8000 : 2500);
+    } else {
+      hint.classList.remove('visible');
+    }
+  });
+}, { threshold: 0.4 });
+
+Object.keys(hintSectionMap).forEach(id => {
+  const el = document.getElementById(id);
+  if (el) hintObserver.observe(el);
+});
+
+// Hide hint as soon as user starts scrolling within that section
+let currentHintSection = null;
+
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const windowHeight = window.innerHeight;
+  const mid = scrollY + windowHeight * 0.5;
+
+  // Find which section the middle of screen is in
+  let activeSection = null;
+  document.querySelectorAll('.section').forEach(sec => {
+    const top = sec.offsetTop;
+    const bottom = top + sec.offsetHeight;
+    if (mid >= top && mid < bottom) activeSection = sec.id;
+  });
+
+  if (activeSection !== currentHintSection) {
+    currentHintSection = activeSection;
+    // Hide all hints, then show the active one's hint if applicable
+    hints.forEach(h => h.classList.remove('visible'));
+    const activeHint = hintSectionMap[activeSection];
+    if (activeHint) {
+      const delay = activeSection === 'sec2' ? 8000 : 2500;
+      setTimeout(() => {
+        if (currentHintSection === activeSection) {
+          activeHint.classList.add('visible');
+        }
+      }, delay);
+    }
+  }
+
+  // If user scrolled even slightly within a section, hide the hint
+  const activeHint = hintSectionMap[activeSection];
+  if (activeHint) {
+    const sec = document.getElementById(activeSection);
+    const scrolledInSection = scrollY - sec.offsetTop;
+    if (scrolledInSection > 80) {
+      activeHint.classList.remove('visible');
+    }
+  }
+}, { passive: true });
+
+// ═══════ MOUSE GLOW ═══════
+const mouseGlow = document.getElementById('mouseGlow');
+let glowActive = false;
+
+document.addEventListener('mousemove', (e) => {
+  if (!glowActive) { mouseGlow.classList.add('active'); glowActive = true; }
+  mouseGlow.style.left = e.clientX + 'px';
+  mouseGlow.style.top = e.clientY + 'px';
+}, { passive: true });
+
+// ═══════ BREATHING TEXT ═══════
+setTimeout(() => {
+  const s1Main = document.getElementById('s1Main');
+  if (s1Main) s1Main.classList.add('s1-breathed');
+}, 3500);
+
+// ═══════ TYPEWRITER ═══════
+let typewriterActive = false;
+
+function typeWriter(el, text, speed = 28) {
+  return new Promise(resolve => {
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    el.textContent = '';
+    el.appendChild(cursor);
+    function type() {
+      if (i < text.length) {
+        cursor.before(text.charAt(i));
+        i++;
+        setTimeout(type, speed);
+      } else {
+        setTimeout(() => { cursor.remove(); resolve(); }, 500);
+      }
+    }
+    type();
+  });
+}
+
+async function runTypewriter(section) {
+  if (typewriterActive) return;
+  typewriterActive = true;
+  const lines = section.querySelectorAll('.typewriter-line');
+  for (const line of lines) {
+    const text = line.getAttribute('data-line');
+    line.style.minHeight = '2.5em';
+    await typeWriter(line, text);
+    await new Promise(r => setTimeout(r, 1000));
+  }
+  typewriterActive = false;
+}
+
+// ═══════ REVEAL LINES ═══════
+function revealLines(section) {
+  section.querySelectorAll('.reveal-line').forEach(line => {
+    const delay = parseInt(line.getAttribute('data-delay')) || 0;
+    setTimeout(() => line.classList.add('visible'), delay);
+  });
+  section.querySelectorAll('.soft-divider').forEach(div => {
+    const delay = parseInt(div.getAttribute('data-delay')) || 0;
+    setTimeout(() => div.classList.add('visible'), delay);
+  });
+  section.querySelectorAll('.signature').forEach(sig => {
+    const delay = parseInt(sig.getAttribute('data-delay')) || 0;
+    setTimeout(() => sig.classList.add('visible'), delay);
+  });
+  section.querySelectorAll('.quote-deco').forEach(q => {
+    const delay = parseInt(q.getAttribute('data-delay')) || 0;
+    setTimeout(() => q.classList.add('visible'), delay);
+  });
+}
+
+// ═══════ INTERSECTION OBSERVER ═══════
+const triggered = new Set();
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const id = entry.target.id;
+    if (triggered.has(id)) return;
+    triggered.add(id);
+
+    switch (id) {
+      case 'sec2': runTypewriter(entry.target); break;
+      case 'sec3':
+        entry.target.querySelector('.glass-card').classList.add('visible');
+        revealLines(entry.target);
+        break;
+      case 'sec4':
+        document.getElementById('amberOverlay').classList.add('active');
+        revealLines(entry.target);
+        break;
+      case 'sec5':
+        document.getElementById('bouquet').classList.add('visible');
+        revealLines(entry.target);
+        break;
+      case 'sec6':
+        setParticleSpeed(0.08);
+        revealLines(entry.target);
+        break;
+      case 'sec7': revealLines(entry.target); break;
+      case 'sec8': revealLines(entry.target); break;
+    }
+
+    if (id === 'sec6') {
+      const ro = new IntersectionObserver((e) => {
+        if (!e[0].isIntersecting) { setParticleSpeed(0.25); ro.disconnect(); }
+      }, { threshold: 0.1 });
+      ro.observe(entry.target);
+    }
+
+    if (id === 'sec4') {
+      const ao = new IntersectionObserver((e) => {
+        if (!e[0].isIntersecting) {
+          document.getElementById('amberOverlay').classList.remove('active');
+          ao.disconnect();
+        }
+      }, { threshold: 0.1 });
+      ao.observe(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.section').forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
